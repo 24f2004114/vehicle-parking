@@ -9,13 +9,13 @@ app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///database.sqlite3'
 db=SQLAlchemy(app)
 
 class Admin(db.Model):
-    admin_ID=db.Column(db.Integer,primary_key=True,auto_increment=True)
+    admin_ID=db.Column(db.Integer,primary_key=True,autoincrement=True)
     username=db.Column(db.String(100),nullable=False)
     password=db.Column(db.String(100),nullable=False)
 
 
 class User(db.Model):
-    user_ID=db.Column(db.Integer,primary_key=True,auto_increment=True)
+    user_ID=db.Column(db.Integer,primary_key=True,autoincrement=True)
     Username=db.Column(db.String(100),nullable=False,unique=True)
     password=db.Column(db.String(100),nullable=False)
     fullname=db.Column(db.String(200),nullable=False)
@@ -26,7 +26,7 @@ class User(db.Model):
 
 
 class Parkinglot(db.Model):
-    Lot_ID=db.Column(db.Integer,primary_key=True,auto_increment=True)
+    Lot_ID=db.Column(db.Integer,primary_key=True,autoincrement=True)
     Prime_Location_Name=db.Column(db.String(200),nullable=False,unique=True)
     Address=db.Column(db.String(300),nullable=False)
     PinCode=db.Column(db.Integer,nullable=False)
@@ -37,13 +37,13 @@ class Parkinglot(db.Model):
 
 class Spot(db.Model):
     Lot_ID=db.Column(db.Integer,db.ForeignKey('parkinglot.Lot_ID'),nullable=False)
-    Spot_ID=db.Column(db.Integer,primary_key=True,auto_increment=True)
+    Spot_ID=db.Column(db.Integer,primary_key=True,autoincrement=True)
     Status=db.Column(db.Boolean,nullable=False,default=False)
     bookings=db.relationship("Booking",backref="spot",lazy=True)
 
 
 class Booking(db.Model):
-    Booking_ID=db.Column(db.Integer,primary_key=True,auto_increment=True)
+    Booking_ID=db.Column(db.Integer,primary_key=True,autoincrement=True)
     user_ID=db.Column(db.Integer,db.ForeignKey('user.user_ID'),nullable=False)
     spot_ID=db.Column(db.Integer,db.ForeignKey('spot.Spot_ID'),nullable=False)
     vehicle_number=db.Column(db.String(20),nullable=False)
@@ -53,6 +53,7 @@ class Booking(db.Model):
 
     
 
+app.app_context().push()
 with app.app_context():
     db.create_all()
 
@@ -76,7 +77,7 @@ def login():
         if already_user:
             return redirect(url_for("user_dashboard"))
         else:
-            return render_template("invalid.html", errormessage="Invalid credentials for user")
+            return render_template("invalid.html", errormessage="Invalid credentials for user") # this one
 
 
     return render_template('login.html')
@@ -90,7 +91,7 @@ def admin():
         password=request.form["password"]
 
         if admin_username=="iamadmin" and password=="addme":
-            return redirect(url_for("admindashboard"))
+            return redirect(url_for("admin_dashboard"))
         else:
             return render_template("invalid.html", errormessage="Invalid credentials for admin ")
     return render_template("admin_login.html")
@@ -118,7 +119,16 @@ def registration():
 @app.route('/admin-dashboard')
 def admin_dashboard():
     lots=Parkinglot.query.all()
-    return render_template("admin_dashboard.html",lots=lots)
+    occupied_lots=[]
+    for lot in lots:
+        occupied_lot =Spot.query.filter_by(Lot_ID=lot.id,Status=True).count()
+        occupied_lots.append({
+            "parking_lot":lot,
+            "occupied":occupied_lot,
+            "total":lot.Maximum_spots
+            
+        })
+    return render_template("admin_dashboard.html",lots=occupied_lots)
 
 @app.route('/registered-users')
 def all_users():
@@ -128,9 +138,9 @@ def all_users():
 
 @app.route("/search-a-lot",methods=['GET','POST'])
 def searching():
-    lots=[]
-    if request.method=='POST':
-        location=request.form['lot']
+    return 0
+
+
 
 @app.route("/admin-summary")
 def adminsummary():
