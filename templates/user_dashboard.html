@@ -31,7 +31,7 @@
                 <ul class="navbar-nav gap-5">
                   
   <li class="nav-item w-100">
-      <form class="d-flex w-100" role="search" action="{{url_for('search')}}" methodd="POST">
+      <form class="d-flex w-100" role="search" action="{{url_for('search')}}" methodd="POST"><!-- this one-->
         <input class="form-control me-2 w-50" type="search" placeholder="Search a lot" aria-label="Search" name="lot"/>
         <button class="btn btn-outline-success" type="submit">Search</button>
       </form>"
@@ -40,16 +40,16 @@
                         <a class="nav-link active" aria-current="page" href="#"><h3>Home</h3></a>
                     </li>
                     <li class="nav-item">
-                      <a class="nav-link active" aria-current="page" href="{{url_for('static',filename='search.html')}}"><h3>Booking History</h3></a>
+                      <a class="nav-link active" aria-current="page" href="{{url_for('static',filename='search.html')}}"><h3>Booking History</h3></a><!-- this one-->
                   </li>
                     <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{url_for('static',filename='user_summary.html')}}"><h3>Summary</h3></a>
+                        <a class="nav-link active" aria-current="page" href="{{url_for('static',filename='user_summary.html')}}"><h3>Summary</h3></a><!-- this one-->
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="{{url_for('static',filename='index.html')}}"><h3>Logout</h3></a>
                     </li>
                     <li>
-                      <a href="{{url_for('static',filename='user_profile.html')}}"><h3>Edit/View Profile</h3></a>
+                      <a href="{{url_for('static',filename='user_profile.html')}}"><h3>Edit/View Profile</h3></a><!-- this one-->
                     </li>
                     
                    

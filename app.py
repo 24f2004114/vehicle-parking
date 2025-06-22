@@ -77,10 +77,14 @@ def login():
         if already_user:
             return redirect(url_for("user_dashboard"))
         else:
-            return render_template("invalid.html", errormessage="Invalid credentials for user") # this one
+            return render_template("invalid.html", errormessage="Invalid credentials for user")
 
 
-    return render_template('login.html')
+    return render_template('user_login.html')
+
+@app.route("/user-dashboard",methods=["GET","POST"])
+def user_dashboard():
+    return render_template('user_dashboard')
 
 
 
@@ -108,6 +112,11 @@ def registration():
         address=request.form["address"]
         pincode=request.form["pincode"]
 
+
+        already_users=User.query.filter((User.Username==username)|(User.email_ID==email)).first()
+        if already_users:
+            return render_template("invalid.html",errormessage="User already registered with this credentials")
+
         add_user=User(Username=username,password=password,fullname=fullname,email_ID=email,address=address,PinCode=pincode)
         db.session.add(add_user)
         db.session.commit()
@@ -121,7 +130,7 @@ def admin_dashboard():
     lots=Parkinglot.query.all()
     occupied_lots=[]
     for lot in lots:
-        occupied_lot =Spot.query.filter_by(Lot_ID=lot.id,Status=True).count()
+        occupied_lot =Spot.query.filter_by(Lot_ID=lot.Lot_ID,Status=True).count()
         occupied_lots.append({
             "parking_lot":lot,
             "occupied":occupied_lot,
@@ -133,20 +142,104 @@ def admin_dashboard():
 @app.route('/registered-users')
 def all_users():
     all_users=User.query.all()
-    return render_template('users.html',users=all_users)
+    return render_template('users.html',users=all_users) #iss pure route par kaam karna h
 
 
-@app.route("/search-a-lot",methods=['GET','POST'])
+@app.route("/search-a-lot",methods=['GET','POST'])  # iss pure route par bhi kaam karna h
 def searching():
-    return 0
+    type=request.form["SEARCH_BY"]
+    string=request.form["search_string"]
 
+    queriedspot=[]
+    querieduser=[]
+    if type=="location":
+        filtered=Parkinglot.query.filter(Parkinglot.Prime_Location_Name.ilike(f"%{string}%")).all()
+        for i in filtered:
+            j=Spot.query.filter_by(Lot_ID=i.Lot_ID, Status=True).count()
+            queriedspot.append({
+                "parking_lot":i,
+                "occupied":j,
+                "total":i.Maximum_spots
+            })
+    elif type=="parking_lot":
+        filtered=Parkinglot.query.filter_by(Lot_ID=string).first()
+        if filtered:
+            j=Spot.query.filter_by(Lot_ID=filtered.Lot_ID,Status=True).count()
+            queriedspot.append({
+                "parking_lot":filtered,
+                "occupied":j,
+                "total":filtered.Maximum_spots
+            })
+    elif type=="user_id":
+        filtered=User.query.filter_by(user_ID=string).first()
+        if filtered: # agar ye nhi ho to isko bhi handle karna hoga
+            querieduser.append({
+                "ID":filtered.user_ID,
+                "Email":filtered.email_ID,
+                "Fullname":filtered.fullname,
+                "address":filtered.address,
+                "pincode":filtered.PinCode
+            })
+    elif type=="email_ID":
+        filtered=User.query.filter_by(email_ID=string).first()
+        if filtered:
+            querieduser.append({
+                "ID":filtered.user_ID,
+                "Email":filtered.email_ID,
+                "Fullname":filtered.fullname,
+                "address":filtered.address,
+                "pincode":filtered.PinCode
+            })
+    elif type=="username":
+        filtered=User.query.filter_by(Username=string).first()
+        if filtered:
+            querieduser.append({
+                "ID":filtered.user_ID,
+                "Email":filtered.email_ID,
+                "Fullname":filtered.fullname,
+                "address":filtered.address,
+                "pincode":filtered.PinCode
+            })
+    elif type=="pincode":
+        filtered=User.query.filter_by(PinCode=string).all()
+        for i in filtered:
+            querieduser.append({
+                "ID":i.user_ID,
+                "Email":i.email_ID,
+                "Fullname":i.fullname,
+                "address":i.address,
+                "pincode":i.PinCode
+            })
+    elif type=="fullname":
+        filtered=User.query.filter_by(fullname=string).all()
+        for i in filtered:
+            querieduser.append({
+                "ID":i.user_ID,
+                "Email":i.email_ID,
+                "Fullname":i.fullname,
+                "address":i.address,
+                "pincode":i.PinCode
+            })
+    return render_template('searching.html',spots=queriedspot,users=querieduser)
 
+# <option value="location">Location</option>
+#                 <option value="user_id">User ID</option>
+#                 <option value="parking_lot">Parking lot ID</option>
+#                 <option value="email_ID">Email ID</option>
+#                 <option value="username">Username</option>
+#                 <option value="pincode">Pincode</option>
+#                 <option value="fullname">Full Name</option>
 
-@app.route("/admin-summary")
+@app.route("/admin-summary") # iss route par bhi kaam karna h
 def adminsummary():
     return 0
 
-        
+@app.route("/admin-profile")
+def admin_profile():
+    return 0
+@app.route("/add-lot")
+def add_lot():
+    return 0
 
 if __name__=='__main__':
     app.run(debug=True)
