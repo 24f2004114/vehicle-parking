@@ -50,6 +50,7 @@ class Booking(db.Model):
     booking_time=db.Column(db.DateTime, default=datetime.utcnow)
     duration=db.Column(db.Integer,nullable=False)
     cost=db.Column(db.Float,nullable=False)
+    area=db.Column(db.Float,nullable=False)
 
     
 
@@ -159,7 +160,7 @@ def searching():
             queriedspot.append({
                 "parking_lot":i,
                 "occupied":j,
-                "total":i.Maximum_spots
+                "total":i.Maximum_spots 
             })
     elif type=="parking_lot":
         filtered=Parkinglot.query.filter_by(Lot_ID=string).first()
@@ -221,14 +222,6 @@ def searching():
                 "pincode":i.PinCode
             })
     return render_template('searching.html',spots=queriedspot,users=querieduser)
-
-# <option value="location">Location</option>
-#                 <option value="user_id">User ID</option>
-#                 <option value="parking_lot">Parking lot ID</option>
-#                 <option value="email_ID">Email ID</option>
-#                 <option value="username">Username</option>
-#                 <option value="pincode">Pincode</option>
-#                 <option value="fullname">Full Name</option>
 
 @app.route("/admin-summary") # iss route par bhi kaam karna h
 def adminsummary():
