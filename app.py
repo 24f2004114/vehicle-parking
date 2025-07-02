@@ -1,10 +1,15 @@
-from flask import Flask,render_template,url_for,request,redirect
+from flask import Flask,render_template,url_for,request,redirect,session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
+import matplotlib.pyplot as plt
+# https://www.meesho.com/women-handbag-big-size-office-purse-for-women-handbag-women-tote-bag-for-college-leather-handbag-purse-for-women-stylish-women-purse-ladies-bag-handbags/p/8oq1z8
+# est. cost ka bhi karna h kuch
+# user profile bhi karni h
 
 app=Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI']='sqlite:///database.sqlite3'
+app.secret_key='vinod#kumar222'
+
 
 db=SQLAlchemy(app)
 
@@ -50,13 +55,16 @@ class Booking(db.Model):
     booking_time=db.Column(db.DateTime, default=datetime.utcnow)
     duration=db.Column(db.Integer,nullable=False)
     cost=db.Column(db.Float,nullable=False)
-    area=db.Column(db.Float,nullable=False)
 
     
 
 app.app_context().push()
 with app.app_context():
     db.create_all()
+    if not Admin.query.first():
+        default=Admin(username="iamadmin",password="addme")
+        db.session.add(default)
+        db.session.commit
 
 
 
@@ -65,6 +73,99 @@ with app.app_context():
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/user_searching',methods=["POST","GET"])
+def user_searching():
+    if request.method=="POST":
+
+        type=request.form["SEARCH_BY"]
+        string=request.form["search_string"]
+
+        queriedlot=[]
+        if type=="location":
+            filtered=Parkinglot.query.filter(Parkinglot.Prime_Location_Name.ilike(f"%{string}%")).all()
+            for i in filtered:
+                j=Spot.query.filter_by(Lot_ID=i.Lot_ID, Status=True).count()
+                available=Spot.query.filter_by(Lot_ID=i.Lot_ID,Status=False).first()
+                queriedlot.append({
+                    "parking_lot":i,
+                    "occupied":j,
+                    "total":i.Maximum_spots,
+                    "available":available
+                })
+        elif type=="pincode":
+            filtered=Parkinglot.query.filter_by(PinCode=int(string)).all()
+            for i in filtered:
+                j=Spot.query.filter_by(Lot_ID=i.Lot_ID, Status=True).count()
+                available=Spot.query.filter_by(Lot_ID=i.Lot_ID,Status=False).first()
+
+                queriedlot.append({
+                    "parking_lot":i,
+                    "occupied":j,
+                    "total":i.Maximum_spots,
+                    "available":available
+                })
+    
+        return render_template('user_searching.html',lots=queriedlot)
+    
+    return redirect(url_for('user_dashboard'))
+
+
+
+
+@app.route('/user_booking/<int:spot_id>',methods=['GET','POST'])
+def user_booking(spot_id):
+    spot=Spot.query.get_or_404(spot_id)
+    lot=spot.parkinglot
+    user_id=session.get('user_id')
+    if request.method=='POST':
+        vehicle_no=request.form['vehicle_number']
+        booking=Booking(user_ID=user_id,spot_ID=spot.Spot_ID,vehicle_number=vehicle_no,booking_time=datetime.utcnow(),duration=0,cost=0)
+        spot.Status=True
+        db.session.add(spot)
+        db.session.commit()
+        db.session.add(booking)
+        db.session.commit()
+        return redirect(url_for('user_dashboard'))
+    return render_template('user_booking.html',spot=spot,lot=lot,user_id=user_id)
+
+@app.route('/release/<int:booking_id>',methods=['GET','POST'])
+def release_spot(booking_id):
+    booking=Booking.query.get_or_404(booking_id)
+    if request.method=='POST':
+        release_time=datetime.utcnow()
+        duration=((release_time-booking.booking_time).total_seconds())//3600+1
+        cost=duration*(booking.spot.parkinglot.Price)
+
+        booking.duration=int(duration)
+        booking.cost=cost
+        booking.spot.Status=False
+        db.session.commit()
+        return redirect(url_for('user_dashboard'))
+    return render_template('release_spot.html',booking=booking,now=datetime.now)
+
+@app.route('/delete/<int:id>',methods=["GET","POST"])
+def delete(id):
+    lot=Parkinglot.query.get_or_404(id)
+    for i in lot.spots:
+        db.session.delete(i)
+    db.session.delete(lot)
+    db.session.commit()
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/edit/<int:id>',methods=["GET","POST"])
+def edit(id):
+    lot=Parkinglot.query.get(id)
+    if request.method=="POST":
+        lot.Prime_Location_Name=request.form['location']
+        lot.Address=request.form['Address']
+        lot.PinCode=request.form['Pincode']
+        lot.Price=request.form['Price']
+        lot.Maximum_spots=request.form['maximum_spots']
+        db.session.commit()
+        return redirect(url_for("admin_dashboard"))
+    return render_template('edit.html',lot=lot)
 
 
 @app.route("/login",methods=["GET","POST"])
@@ -76,6 +177,7 @@ def login():
         already_user=User.query.filter_by(Username=username,password=password).first()
 
         if already_user:
+            session['user_id']=already_user.user_ID
             return redirect(url_for("user_dashboard"))
         else:
             return render_template("invalid.html", errormessage="Invalid credentials for user")
@@ -85,7 +187,27 @@ def login():
 
 @app.route("/user-dashboard",methods=["GET","POST"])
 def user_dashboard():
-    return render_template('user_dashboard')
+    userid=session.get('user_id')
+    if userid:
+        bookings=Booking.query.filter_by(user_ID=userid).order_by(Booking.booking_time.desc()).all()
+        return render_template('user_dashboard.html',bookings=bookings)
+
+
+    return render_template('user_dashboard.html')
+
+
+# lots=Parkinglot.query.all()
+#     occupied_lots=[]
+#     for lot in lots:
+#         occupied_lot =Spot.query.filter_by(Lot_ID=lot.Lot_ID,Status=True).count()
+#         occupied_lots.append({
+#             "parking_lot":lot,
+#             "occupied":occupied_lot,
+#             "total":lot.Maximum_spots
+            
+#         })
+#     return render_template("admin_dashboard.html",lots=occupied_lots)
+
 
 
 
@@ -95,13 +217,23 @@ def admin():
         admin_username=request.form["username"]
         password=request.form["password"]
 
-        if admin_username=="iamadmin" and password=="addme":
+        admin=Admin.query.filter_by(username=admin_username,password=password)
+        if admin:
             return redirect(url_for("admin_dashboard"))
         else:
             return render_template("invalid.html", errormessage="Invalid credentials for admin ")
     return render_template("admin_login.html")
     
-
+@app.route("/admin-profile",methods=["GET","POST"])
+def admin_profile():
+    admin=Admin.query.first()
+    if request.method=="POST":
+        admin.username=request.form['username']
+        admin.password=request.form['password']
+        admin.admin_ID=request.form['id']
+        db.session.commit()
+        return redirect(url_for("admin_dashboard"))
+    return render_template('admin_profile.html',admin=admin)
 
 @app.route("/registration", methods=["GET","POST"])
 def registration():
@@ -143,10 +275,10 @@ def admin_dashboard():
 @app.route('/registered-users')
 def all_users():
     all_users=User.query.all()
-    return render_template('users.html',users=all_users) #iss pure route par kaam karna h
+    return render_template('users.html',users=all_users)
 
 
-@app.route("/search-a-lot",methods=['GET','POST'])  # iss pure route par bhi kaam karna h
+@app.route("/searching",methods=['GET','POST'])  # iss pure route par bhi kaam karna h
 def searching():
     type=request.form["SEARCH_BY"]
     string=request.form["search_string"]
@@ -160,7 +292,7 @@ def searching():
             queriedspot.append({
                 "parking_lot":i,
                 "occupied":j,
-                "total":i.Maximum_spots 
+                "total":i.Maximum_spots
             })
     elif type=="parking_lot":
         filtered=Parkinglot.query.filter_by(Lot_ID=string).first()
@@ -223,16 +355,165 @@ def searching():
             })
     return render_template('searching.html',spots=queriedspot,users=querieduser)
 
+
+
 @app.route("/admin-summary") # iss route par bhi kaam karna h
 def adminsummary():
-    return 0
 
-@app.route("/admin-profile")
-def admin_profile():
-    return 0
-@app.route("/add-lot")
+    # pie chart h ye
+    lots=Parkinglot.query.all()
+    label=[] 
+    data=[]
+    for i in lots:
+        lot_revenue=0
+        spots=Spot.query.filter_by(Lot_ID=i.Lot_ID).all()
+        for j in spots:
+            bookings=Booking.query.filter_by(spot_ID=j.Spot_ID).all()
+
+            for k in bookings:
+                lot_revenue+=k.cost
+        label.append(i.Prime_Location_Name)
+        data.append(lot_revenue)
+    plt.figure(figsize=(5,5))
+    plt.pie(data,labels=label)
+    plt.title('Revenue from each parking lot')
+    plt.savefig("static/revenue.png")
+    plt.close()
+    #now calculating the total
+    total=0
+    for i in data:
+        total+=i
+
+
+# ab bar chart --- stacked
+    available=[]
+    occupied=[]
+    for i in lots:
+        spots=Spot.query.filter_by(Lot_ID=i.Lot_ID).all()
+        a=0
+        o=0
+        for j in spots:
+            if j.Status:
+                o+=1
+            else:
+                a+=1
+        available.append(a)
+        occupied.append(o)
+    x=range(len(label))
+    plt.figure(figsize=(5,5))
+    plt.bar(x,available,width=0.4,label='available',color='#4CAF50')
+    plt.bar(x,occupied,width=0.4,label='occupied', bottom=available,color="#D5F80D")
+    plt.xticks(x,label,rotation=20)
+    plt.ylabel('number of spots')
+    plt.title('Available vs Occupied spots per parking lot')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("static/oa.png")
+    plt.close()
+    
+    return render_template('summary.html',total_revenue=total,revenue='revenue.png',oa='oa.png')  
+
+        
+        
+@app.route('/user_summary')
+def user_summary():
+    user_id=session.get('user_id')
+    bookings=Booking.query.filter_by(user_ID=user_id).all()
+    labels=[]
+    values=[]
+    for i in bookings:
+        lot_name=i.spot.parkinglot.Prime_Location_Name
+        
+        labels.append(lot_name)
+        values.append(i.cost)
+
+
+    plt.figure(figsize=(5,5))
+    plt.bar(labels,values,color='blue')
+    plt.xlabel("parking lot")
+    plt.ylabel('number of bookings')
+    plt.title('Your parking used lots')
+    plt.savefig('static/user_summary_img.png')
+    plt.close()
+
+    return render_template('user_summary.html',chart='user.png')
+
+
+
+
+
+
+
+@app.route("/add-lot",methods=["GET","POST"])
 def add_lot():
-    return 0
+    if request.method=="POST":
+        Prime_Location_Name=request.form['location']
+        Address=request.form['Address']
+        PinCode=request.form['Pincode']
+        Price=request.form['Price']
+        Maximum_spots=request.form['maximum_spots']
+        already_exist=Parkinglot.query.filter_by(Prime_Location_Name=Prime_Location_Name).first()
+        if already_exist:
+            return render_template('invalid.html',errormessage="Parking lot already exist")
+        new_lot=Parkinglot(Prime_Location_Name=Prime_Location_Name,Address=Address,PinCode=PinCode,Price=Price,Maximum_spots=Maximum_spots)
+        
+        db.session.add(new_lot)
+        db.session.commit()
+
+
+        for i in range (int(Maximum_spots)):
+            spot=Spot(Lot_ID=new_lot.Lot_ID,Status=False)
+            db.session.add(spot)
+        db.session.commit()
+        return redirect(url_for("admin_dashboard"))
+    return render_template('add_lot.html')
+
+@app.route("/spot/<int:lot_id>/<int:spot_id>",methods=["GET","POST"])
+def view(lot_id,spot_id):
+    spot=Spot.query.filter_by(Spot_ID=spot_id,Lot_ID=lot_id).first()
+    booking=0
+    if spot.Status:
+        booking=Booking.query.filter_by(spot_id=spot.Spot_ID).order_by(Booking.booking_time.desc()).first()
+        
+    if request.method=="POST":
+        if not spot.Status:
+            db.session.delete(spot)
+            db.session.commit()
+            return redirect(url_for("admin_dashboard"))
+        else:
+            return render_template("invalid.html",errormessage="Can not delete an occupied parking lot")
+    return render_template("view.html",spot=spot,booking=booking)
+
+    # isko karna h pura
+
+@app.route('/occupied_details/booking_id')
+def occupied_details(booking_id):
+    booking=Booking.query.filter_by(Booking_ID=booking_id).first()
+    id=booking.spot_ID
+    customer_id=booking.user_ID
+    vehicle_no=booking.vehicle_number
+    Time=booking.booking_time
+    cost=booking.cost
+    details=[id,customer_id,vehicle_no,Time,cost]
+    return render_template('occupied_details.html',details=details)
+
+@app.route('/user_profile',methods=["GET","POST"])
+def user_profile():
+    userid=session.get('user_id')
+    user=User.query.get(userid)
+    if request.method=='POST':
+        user.fullname=request.form['fullname']
+        user.email_ID=request.form['email']
+        user.address=request.form['address']
+        user.PinCode=request.form['pincode']
+
+        db.session.commit()
+
+        return redirect(url_for('user_dashboard'))
+    return render_template('user_profile.html',user=user)
+
+
+
 
 if __name__=='__main__':
     app.run(debug=True)
