@@ -9,7 +9,7 @@
 </head>
 <body>
     <div>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-light sticky-top"  >
+        <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top"  >
           <div class="container-fluid">
               <div class="row w-100">
               <div class="col-3" >
@@ -23,7 +23,7 @@
               </div>
               <div class="row w-100">
               <div class="col-12">
-                  <nav class="navbar navbar-expand-lg">
+                  <div>
                       <div class="container-fluid justify-content-end">
               <button class="navbar-toggler me-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="toggle navigation">
                   <span class="navbar-toggler-icon"></span>
@@ -73,16 +73,62 @@
             
               </div>
               </div>
-              </nav>
+</div>
               </div>
               </div>
           </div>
-      </nav>
+      </nav>  
+      </div>
+      <div>
+        {% if spots|length !=0 %}
+        {% for i in spots %}
+            <div style="border: 3px solid black;">
+                <h3>Parking : {{  i.parking_lot.Lot_ID }}</h3>
+                <h3>{{ i.parking_lot.Prime_Location_Name }}</h3>
+                <a href="/edit/{{ i.parking_lot.Lot_ID }}">Edit</a><!-- this one-->
+                <a href="/delete/{{ i.parking_lot.Lot_ID }}">Delete</a><!-- this one-->
+                <h4 style="color: hotpink; font-weight: bold;">Occupied :- {{ i.occupied }} / {{ i.total }}</h4>
 
+                <div style="display: grid; grid-template-columns: repeat(5,30px); gap: 8px; margin-top: 11px;">
+                    {% for spot in i.parking_lot.spots %}
+                    {% if spot.Status %}
+                    <div style="width: 32px; height: 20px; text-align: center; line-height: 32px; border-radius: 5px; font-weight: bold; border-radius: 6px; font-weight: bold; border: 1px solid pink;">O</div>
+                    {% else %}
+                    <div style="width: 32px; height: 20px; text-align: center; line-height: 32px; border-radius: 5px; font-weight: bold; border-radius: 6px; font-weight: bold; border: 1px solid lightblue;">A</div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
 
-      
-        
-        
+            </div>
+            {% endfor %}
+            {% elif users|length !=0 %}
+            <table>
+                <thead>
+                <tr>
+                    <th> ID</th>
+                    <th>Email</th>
+                    <th>Full Name</th>
+                    <th>Address</th>
+                    <th>PinCode</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for i in users %}
+                <tr>
+                    <td>{{ i.ID }}</td>
+                    <td>{{ i.Email }}</td>
+                    <td>{{ i.Fullname }}</td>
+                    <td>{{ i.address }}</td>
+                    <td>{{ i.pincode }}</td>
+                </tr>
+            </tbody>
+            {% endfor %}         
+        </table>
+        {% else %}
+        <div class="d-flex flex-column align-items-center my-4">
+            <h2 class="mb-4 text-center">NO Results Found </h2>
+            </div>            
+            {% endif %}
       </div>
 </body>
 </html>

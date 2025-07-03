@@ -2,7 +2,6 @@ from flask import Flask,render_template,url_for,request,redirect,session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import matplotlib.pyplot as plt
-# https://www.meesho.com/women-handbag-big-size-office-purse-for-women-handbag-women-tote-bag-for-college-leather-handbag-purse-for-women-stylish-women-purse-ladies-bag-handbags/p/8oq1z8
 # est. cost ka bhi karna h kuch
 # user profile bhi karni h
 
