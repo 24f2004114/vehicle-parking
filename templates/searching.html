@@ -50,19 +50,19 @@
                   </div>
                     <ul class="navbar-nav d-flex flex-row gap-3 align-items-center mb-0">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('admin_dashboard')}}"><h3>Home</h3></a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('admin_dashboard')}}"><h4>Home</h4></a>
                         </li>
                         <li class="nav-item">
-                          <a class="nav-link active" aria-current="page" href="{{url_for('all_users')}}"><h3>Users</h3></a><!-- this one-->
+                          <a class="nav-link active" aria-current="page" href="{{url_for('all_users')}}"><h4>Users</h4></a><!-- this one-->
                       </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('adminsummary')}}"><h3>Summary</h3></a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('adminsummary')}}"><h4>Summary</h4></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="{{url_for('home')}}"><h3>Logout</h3></a>
+                            <a class="nav-link active" aria-current="page" href="{{url_for('home')}}"><h4>Logout</h4></a>
                         </li>
                         <li>
-                          <a href="{{url_for('admin_profile')}}"><h3>Edit/View Profile</h3></a> <!-- this one-->
+                          <a href="{{url_for('admin_profile')}}"><h4>Edit/View Profile</h4></a> <!-- this one-->
                         </li>
                         
                        
@@ -75,6 +75,48 @@
                 </div>
             </div>
         </nav>
+
+
+        {% for i in lots %}
+        <div style="width:18rem" class="card shadow rounded-4 text-center m-3">
+            <div class="card-body">
+            <h4 class="card-title">Parking : {{  (loop.index) }}</h4>
+            <h5 class="card-subtitle mb-2">{{ i.parking_lot.Prime_Location_Name }}</h5>
+            <div class="d-flex flex-wrap justify-content-center gap-2 my-2">
+            <a href="/edit/{{ i.parking_lot.Lot_ID }}" class="btn btn-sm btn-outline-primary">Edit</a><!-- this one-->
+            <a href="/delete/{{ i.parking_lot.Lot_ID }}" class="btn btn-sm btn-outline-danger">Delete</a><!-- this one-->
+        </div>
+            <h4 class="fw-bold my-3">Occupied :- {{ i.occupied }} / {{ i.total }}</h4>
+        
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                {% for spot in i.parking_lot.spots %}
+                {% if spot.Status %}
+                <a href="/spot/{{ spot.Lot_ID }}/{{ spot.Spot_ID }}" class="fw-bold text-success d-flex justify-content-center align-items-center border border-1 rounded" style="width: 35px; height: 35px;">O</a>
+                {% else %}
+                <a href="/spot/{{ spot.Lot_ID }}/{{ spot.Spot_ID }}" class="fw-bold text-primary d-flex justify-content-center align-items-center border border-1 rounded" style="width: 35px; height: 35px;">A</a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        </div>
+        {% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
       </div>
       <div class="d-flex flex-column align-items-center my-4">
@@ -86,7 +128,7 @@
             <div class="card-body">
             <h4 class="card-title">Parking : {{  (loop.index) }}</h4>
             <h5 class="card-subtitle mb-2 ">{{ i.parking_lot.Prime_Location_Name }}</h5>
-            <div class="d-flex justify-content-center gap-3 my-2">
+            <div class="d-flex flex-wrap justify-content-center gap-2 my-2">
                 <a href="/edit/{{ i.parking_lot.Lot_ID }}" class="btn btn-sm btn-outline-primary">Edit</a><!-- this one-->
                 <a href="/delete/{{ i.parking_lot.Lot_ID }}" class="btn btn-sm btn-outline-danger">Delete</a><!-- this one-->
             </div>
@@ -95,9 +137,9 @@
             <div class="d-flex flex-wrap justify-content-center gap-2">
                 {% for spot in i.parking_lot.spots %}
                 {% if spot.Status %}
-                <a href="/spot/{{ spot.Lot_ID }}/{{ spot.Spot_ID }}" class="fw-bold text-success ">O</a>
+                <a href="/spot/{{ spot.Lot_ID }}/{{ spot.Spot_ID }}" class="fw-bold text-success d-flex justify-content-center align-items-center border border-1 rounded" style="width: 35px; height: 35px;">O</a>
                 {% else %}
-                <a href="/spot/{{ spot.Lot_ID }}/{{ spot.Spot_ID }}" class="fw-bold text-primary">A</a>
+                <a href="/spot/{{ spot.Lot_ID }}/{{ spot.Spot_ID }}" class="fw-bold text-primary d-flex justify-content-center align-items-center border border-1 rounded" style="width: 35px; height: 35px;">A</a>
                 {% endif %}
                 {% endfor %}
             </div>
