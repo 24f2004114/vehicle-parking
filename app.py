@@ -51,8 +51,8 @@ class Booking(db.Model):
     user_ID=db.Column(db.Integer,db.ForeignKey('user.user_ID'),nullable=False)
     spot_ID=db.Column(db.Integer,db.ForeignKey('spot.Spot_ID'),nullable=False)
     vehicle_number=db.Column(db.String(20),nullable=False)
-    booking_time=db.Column(db.DateTime, default=datetime.utcnow)
-    duration=db.Column(db.Integer,nullable=False)
+    booking_time=db.Column(db.DateTime, default=datetime.now())
+    duration=db.Column(db.Float,nullable=False)
     cost=db.Column(db.Float,nullable=False)
 
     
@@ -61,9 +61,9 @@ app.app_context().push()
 with app.app_context():
     db.create_all()
     if not Admin.query.first():
-        default=Admin(username="iamadmin",password="addme")
+        default=Admin(admin_ID=1,username="iamadmin",password="addme")
         db.session.add(default)
-        db.session.commit
+        db.session.commit()
 
 
 
@@ -119,9 +119,8 @@ def user_booking(spot_id):
     user_id=session.get('user_id')
     if request.method=='POST':
         vehicle_no=request.form['vehicle_number']
-        booking=Booking(user_ID=user_id,spot_ID=spot.Spot_ID,vehicle_number=vehicle_no,booking_time=datetime.utcnow(),duration=0,cost=0)
+        booking=Booking(user_ID=user_id,spot_ID=spot.Spot_ID,vehicle_number=vehicle_no,booking_time=datetime.now(),duration=0,cost=0)
         spot.Status=True
-        db.session.add(spot)
         db.session.commit()
         db.session.add(booking)
         db.session.commit()
@@ -131,17 +130,19 @@ def user_booking(spot_id):
 @app.route('/release/<int:booking_id>',methods=['GET','POST'])
 def release_spot(booking_id):
     booking=Booking.query.get_or_404(booking_id)
+    
+    
+    release_time=datetime.now()
+    duration=((release_time-booking.booking_time).total_seconds())/3600
+    price=(booking.spot.parkinglot.Price)
+    cost=duration*price
     if request.method=='POST':
-        release_time=datetime.utcnow()
-        duration=((release_time-booking.booking_time).total_seconds())//3600+1
-        cost=duration*(booking.spot.parkinglot.Price)
-
-        booking.duration=int(duration)
+        booking.duration=duration
         booking.cost=cost
         booking.spot.Status=False
         db.session.commit()
         return redirect(url_for('user_dashboard'))
-    return render_template('release_spot.html',booking=booking,now=datetime.now)
+    return render_template('release_spot.html',booking=booking,now=datetime.now,cost=cost)
 
 @app.route('/delete/<int:id>',methods=["GET","POST"])
 def delete(id):
@@ -162,6 +163,22 @@ def edit(id):
         lot.PinCode=request.form['Pincode']
         lot.Price=request.form['Price']
         lot.Maximum_spots=request.form['maximum_spots']
+
+
+        # in case admin changes Maximum_spots then existing spots need to be deleted
+        spots_count=Spot.query.filter_by(Lot_ID=lot.Lot_ID).count()
+
+        if int(lot.Maximum_spots)>spots_count:
+            for i in range(int(lot.Maximum_spots)-spots_count):
+                new_spot=Spot(Lot_ID=lot.Lot_ID,Status=False)
+                db.session.add(new_spot)
+        elif int(lot.Maximum_spots)< spots_count:
+            delete_spot=Spot.query.filter_by(Lot_ID=lot.Lot_ID,Status=False).all()
+            nonbooked=[i for i in delete_spot if not i.bookings]
+            if len(nonbooked)<(spots_count-int(lot.Maximum_spots)):
+                return render_template("invalid.html",errormessage="Can not delete occupied spots")
+            for i in nonbooked[ :spots_count-int(lot.Maximum_spots)]:
+                db.session.delete(i)
         db.session.commit()
         return redirect(url_for("admin_dashboard"))
     return render_template('edit.html',lot=lot)
@@ -216,8 +233,9 @@ def admin():
         admin_username=request.form["username"]
         password=request.form["password"]
 
-        admin=Admin.query.filter_by(username=admin_username,password=password)
+        admin=Admin.query.filter_by(username=admin_username,password=password).first()
         if admin:
+            session['admin_id']=admin.admin_ID
             return redirect(url_for("admin_dashboard"))
         else:
             return render_template("invalid.html", errormessage="Invalid credentials for admin ")
@@ -225,11 +243,10 @@ def admin():
     
 @app.route("/admin-profile",methods=["GET","POST"])
 def admin_profile():
-    admin=Admin.query.first()
+    admin=Admin.query.get(session['admin_id'])
     if request.method=="POST":
         admin.username=request.form['username']
         admin.password=request.form['password']
-        admin.admin_ID=request.form['id']
         db.session.commit()
         return redirect(url_for("admin_dashboard"))
     return render_template('admin_profile.html',admin=admin)
@@ -252,7 +269,7 @@ def registration():
         add_user=User(Username=username,password=password,fullname=fullname,email_ID=email,address=address,PinCode=pincode)
         db.session.add(add_user)
         db.session.commit()
-        return redirect(url_for("login"))
+        return redirect(url_for("home"))
     # on get method it opens registration page
     return render_template("registration.html")
 
@@ -352,7 +369,7 @@ def searching():
                 "address":i.address,
                 "pincode":i.PinCode
             })
-    return render_template('searching.html',spots=queriedspot,users=querieduser)
+    return render_template('searching.html',spots=queriedspot,users=querieduser)  # it should be lot
 
 
 
@@ -373,11 +390,19 @@ def adminsummary():
                 lot_revenue+=k.cost
         label.append(i.Prime_Location_Name)
         data.append(lot_revenue)
-    plt.figure(figsize=(5,5))
-    plt.pie(data,labels=label)
-    plt.title('Revenue from each parking lot')
-    plt.savefig("static/revenue.png")
-    plt.close()
+    if sum(data)>0:
+        plt.figure(figsize=(5,5))
+        plt.pie(data,labels=label)
+        plt.title('Revenue from each parking lot')
+        plt.savefig("static/revenue.png")
+        plt.close()
+    else:
+        plt.figure(figsize=(5,5))
+        plt.text(0.5,0.5,'No revenue generated',fontsize=14,ha='center',va='center')
+        plt.axis('off')
+        plt.savefig("static/revenue.png")
+        plt.close()
+        
     #now calculating the total
     total=0
     for i in data:
@@ -410,6 +435,7 @@ def adminsummary():
     plt.savefig("static/oa.png")
     plt.close()
     
+    
     return render_template('summary.html',total_revenue=total,revenue='revenue.png',oa='oa.png')  
 
         
@@ -418,24 +444,24 @@ def adminsummary():
 def user_summary():
     user_id=session.get('user_id')
     bookings=Booking.query.filter_by(user_ID=user_id).all()
-    labels=[]
-    values=[]
+    lot_costs={}
     for i in bookings:
         lot_name=i.spot.parkinglot.Prime_Location_Name
+        lot_costs[lot_name]=lot_costs.get(lot_name,0)+i.cost
         
-        labels.append(lot_name)
-        values.append(i.cost)
+    labels=list(lot_costs.keys())
+    values=list(lot_costs.values())
 
 
     plt.figure(figsize=(5,5))
-    plt.bar(labels,values,color='blue')
+    plt.bar(labels,values,color='pink')
     plt.xlabel("parking lot")
-    plt.ylabel('number of bookings')
-    plt.title('Your parking used lots')
+    plt.ylabel('cost in Rs.')
+    plt.title('Your cost of parking used lots')
     plt.savefig('static/user_summary_img.png')
     plt.close()
 
-    return render_template('user_summary.html',chart='user.png')
+    return render_template('user_summary.html',chart='user_summary_img.png')
 
 
 
@@ -449,7 +475,7 @@ def add_lot():
         Prime_Location_Name=request.form['location']
         Address=request.form['Address']
         PinCode=request.form['Pincode']
-        Price=request.form['Price']
+        Price=float(request.form['Price'])
         Maximum_spots=request.form['maximum_spots']
         already_exist=Parkinglot.query.filter_by(Prime_Location_Name=Prime_Location_Name).first()
         if already_exist:
@@ -470,12 +496,15 @@ def add_lot():
 @app.route("/spot/<int:lot_id>/<int:spot_id>",methods=["GET","POST"])
 def view(lot_id,spot_id):
     spot=Spot.query.filter_by(Spot_ID=spot_id,Lot_ID=lot_id).first()
-    booking=0
+    booking=None
     if spot.Status:
         booking=Booking.query.filter_by(spot_id=spot.Spot_ID).order_by(Booking.booking_time.desc()).first()
         
     if request.method=="POST":
         if not spot.Status:
+            parking_lot=Parkinglot.query.get(lot_id)
+            if parking_lot and parking_lot.Maximum_spots>0:
+                parking_lot.Maximum_spots-=1
             db.session.delete(spot)
             db.session.commit()
             return redirect(url_for("admin_dashboard"))

@@ -8,71 +8,66 @@
     <title>Neuro Parking</title>
 </head>
 <body>
-    <div>
+    <div style="font-family: 'Poppins',sans-serif;">
         <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top"  >
-          <div class="container-fluid">
-              <div class="row w-100">
-              <div class="col-3" >
-              <a class="navbar-brand d-flex align-items-center gap-0" href="#" style="font-weight: bold; font-size: 2rem;">
-                  <span style="background-color:beige;color: darkolivegreen; padding: 2px 8px; border-radius: 4px;"> Welcome</span>
-                  <span style="background-color:peru; color:beige; padding:2px 8px; border-radius: 4px;">
-                      USER
-                  </span>
-              </a>
-              </div>
-              </div>
-              <div class="row w-100">
-              <div class="col-12">
-                  <nav class="navbar navbar-expand-lg">
-                      <div class="container-fluid justify-content-end">
-              <button class="navbar-toggler me-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
-              </button>
-              <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-                  <ul class="navbar-nav gap-5">
-                    
-                    <li class="nav-item">
-                        <form action="{{ url_for('user_searching') }}" method="POST" class="d-flex gap-3 my-4">
-                            <!-- this one -->
-                            <div>
-                                <select class="form-select" name="SEARCH_BY" id="search" required>
-                                    <option value="location">Location</option>
-                                    <option value="pincode">pincode</option>
-                                </select>
-                            </div>
-                            <div class="w-50">
-                                <input type="text" class="form-control" name="search_string" placeholder="enter search value" required>
-                            </div>
-                            <div>
-                                <button type="submit" class="btn btn-outline-success">Search</button>
-                            </div>
-                          </form>                    
-                        </li>
-                      <li class="nav-item">
-                          <a class="nav-link active" aria-current="page" href="#"><h3>Home</h3></a>
-                      </li>
-                    
-                      <li class="nav-item">
-                          <a class="nav-link active" aria-current="page" href="{{url_for('user_summary')}}"><h3>Summary</h3></a><!-- this one-->
-                      </li>
-                      <li class="nav-item">
-                          <a class="nav-link active" aria-current="page" href="{{url_for('home')}}"><h3>Logout</h3></a>
-                      </li>
-                      <li>
-                        <a href="{{url_for('user_profile')}}"><h3>Edit/View Profile</h3></a> <!-- this one-->
-                      </li>
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center gap-1" href="#" style="font-weight: bold; font-size: 2rem;">
+                    <span style="background-color:beige;color: darkolivegreen; padding: 2px 8px; border-radius: 4px;"> Welcome</span>
+                    <span style="background-color:peru; color:beige; padding:2px 8px; border-radius: 4px;">
+                        USER
+                    </span>
+                </a>
+              
+                <button class="navbar-toggler me-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                  <div class="d-flex w-100 justify-content-between align-items-center w-100 flex-row flex-nowrap">
                       
-                     
-                  </ul>
-            
-              </div>
-              </div>
-              </nav>
-              </div>
-              </div>
-          </div>
-      </nav>
-
+                    <form action="{{ url_for('user_searching') }}" method="POST" class="d-flex gap-3 my-4">
+                        <!-- this one -->
+                        <div>
+                            <select class="form-select" name="SEARCH_BY" id="search" required>
+                                <option value="" disabled selected>Choose option</option>
+                                <option value="location">Location</option>
+                                <option value="pincode">pincode</option>
+                            </select>
+                        </div>
+                        <div class="w-50">
+                            <input type="text" class="form-control" name="search_string" placeholder="enter search value" required>
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-outline-success">Search</button>
+                        </div>
+                      </form>                        
+                      
+  
+                  </div>
+                    <ul class="navbar-nav d-flex flex-row gap-3 align-items-center mb-0">
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="#"><h3>Home</h3></a>
+                        </li>
+                      
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="{{url_for('user_summary')}}"><h3>Summary</h3></a><!-- this one-->
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" aria-current="page" href="{{url_for('home')}}"><h3>Logout</h3></a>
+                        </li>
+                        <li>
+                          <a href="{{url_for('user_profile')}}"><h3>Edit/View Profile</h3></a> <!-- this one-->
+                        </li>
+                        
+                       
+                    </ul>
+              
+                </div>
+                </div>
+                </div>
+                </div>
+                </div>
+            </div>
+        </nav>
 
       <div class="d-flex flex-column align-items-center my-4">
         <h2 class="mb-4 text-center">Recent Parking History</h2>

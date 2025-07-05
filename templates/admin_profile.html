@@ -8,7 +8,7 @@
 
     <title>Neuro Parking</title>
 </head>
-<body>
+<body style="font-family: 'Poppins',sans-serif;">
     <div style="background-color: darkolivegreen; padding: 10px;">
         <h1 class="text-center">Admin Profile</h1>
 
@@ -16,17 +16,13 @@
     <div class="container d-flex justify-content-center align-items-center vh-100">
         <div id="inner">
             <div id="form" style="width:500px;
-            height: 700px;
+            height: 300px;
             margin:auto;
             border: 1px solid black;
             margin-top: 50px;
             padding: 5px;">
     
                 <form action="" method="post">
-                    <div class="mb-3">
-                      <label for="id" class="form-label">Admin ID</label>
-                      <input type="text" class="form-control" id="id"  name="id" value="{{ admin.admin_ID }}" required>
-                    </div>
                     <div class="mb-3">
                       <label for="username" class="form-label">Username</label>
                       <input type="text" class="form-control" id="username" name="username" value="{{ admin.username }}" required>
