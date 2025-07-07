@@ -148,7 +148,11 @@ def release_spot(booking_id):
 def delete(id):
     lot=Parkinglot.query.get_or_404(id)
     for i in lot.spots:
-        db.session.delete(i)
+        if i.Status==True:
+            return render_template('invalid.html',errormessage="All the spots must be Unoccupied")
+            
+    for i in lot.spots:
+            db.session.delete(i)
     db.session.delete(lot)
     db.session.commit()
     return redirect(url_for('admin_dashboard'))
