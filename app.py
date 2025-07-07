@@ -149,7 +149,7 @@ def delete(id):
     lot=Parkinglot.query.get_or_404(id)
     for i in lot.spots:
         if i.Status==True:
-            return render_template('invalid.html',errormessage="All the spots must be Unoccupied")
+            return render_template('invalid.html',errormessage="All the spots must be Unoccupied",back='admin_dashboard')
             
     for i in lot.spots:
             db.session.delete(i)
@@ -180,7 +180,7 @@ def edit(id):
             delete_spot=Spot.query.filter_by(Lot_ID=lot.Lot_ID,Status=False).all()
             nonbooked=[i for i in delete_spot if not i.bookings]
             if len(nonbooked)<(spots_count-int(lot.Maximum_spots)):
-                return render_template("invalid.html",errormessage="Can not delete occupied spots")
+                return render_template("invalid.html",errormessage="Can not delete occupied spots",back="admin_dashboard")
             for i in nonbooked[ :spots_count-int(lot.Maximum_spots)]:
                 db.session.delete(i)
         db.session.commit()
@@ -200,7 +200,7 @@ def login():
             session['user_id']=already_user.user_ID
             return redirect(url_for("user_dashboard"))
         else:
-            return render_template("invalid.html", errormessage="Invalid credentials for user")
+            return render_template("invalid.html", errormessage="Invalid credentials for user",back="home")
 
 
     return render_template('user_login.html')
