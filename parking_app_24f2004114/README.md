@@ -40,6 +40,3 @@ python3 app.py
 then open the browser and go to "http://127.0.0.1:5000"
 
 
-## Hardcoded values for admin
-username=iamadmin
-password=addme
