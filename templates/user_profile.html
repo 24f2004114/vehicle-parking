@@ -13,6 +13,14 @@
         <h3>Edit/View Profile</h3>
         <form method="POST">
             <div class="mb-3">
+                <label for="username" class="form label">Username</label>
+                <input type="text" class="form-control" name="username" id="username" value="{{ user.Username }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form label">Password</label>
+                <input type="password" class="form-control" name="password" id="password" value="{{ user.password }}" required>
+            </div>
+            <div class="mb-3">
                 <label for="fullname" class="form label">Full Name</label>
                 <input type="text" class="form-control" name="fullname" id="fullname" value="{{ user.fullname }}" required>
             </div>

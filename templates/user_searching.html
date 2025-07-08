@@ -12,6 +12,7 @@
     {% if lots|length == 0 %}
             <div>
                 <p>NOt Found</p>
+                <div class="align-items-centre"><a href="{{ url_for( 'user_dashboard' )}}" class="btn btn-outline-primary">BACK</a></div>
             </div>
             {% else %}
     <table class="table table-bordered">
@@ -20,6 +21,7 @@
                 <th>ID</th>
                 <th>Location</th>
                 <th>Availability</th>
+                <th>Price</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -30,6 +32,7 @@
                 <td>{{ i.parking_lot.Lot_ID }}</td>
                 <td>{{ i.parking_lot.Prime_Location_Name }}</td>
                 <td>{{ (i.total - i.occupied) }}</td>
+                <td>{{ i.Price }}</td>
                 <td>
                     {% if i.available %}
                     
